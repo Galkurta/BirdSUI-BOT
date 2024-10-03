@@ -30,7 +30,7 @@ Before you begin, ensure you have met the following requirements:
 
 ## Configuration
 
-1. Create a `data.txt` file in the root directory of the project.
+1. Edit `data.txt` file in the root directory of the project.
 2. Add your Telegram authentication tokens to the `data.txt` file, one per line.
 
 ## Usage
