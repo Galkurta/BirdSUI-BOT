@@ -287,13 +287,13 @@ class BirdX {
 
     try {
       const projectResponse = await axios.get(
-        "https://birdx-api.birds.dog/project",
+        "https://birdx-api2.birds.dog/project",
         { headers }
       );
       const allTasks = projectResponse.data.flatMap((project) => project.tasks);
 
       const userTasksResponse = await axios.get(
-        "https://birdx-api.birds.dog/user-join-task",
+        "https://birdx-api2.birds.dog/user-join-task",
         { headers }
       );
       const completedTaskIds = userTasksResponse.data.map(
@@ -314,7 +314,7 @@ class BirdX {
           };
 
           const joinTaskResponse = await axios.post(
-            "https://birdx-api.birds.dog/project/join-task",
+            "https://birdx-api2.birds.dog/project/join-task",
             payload,
             { headers }
           );
