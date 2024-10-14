@@ -139,6 +139,50 @@ class BirdX {
     }
   }
 
+  async playEggMinigame(telegramauth) {
+    const headers = {
+      ...this.headers,
+      Telegramauth: `tma ${telegramauth}`,
+    };
+    try {
+      const joinResponse = await axios.get(
+        "https://api.birds.dog/minigame/egg/join",
+        { headers }
+      );
+      let { turn } = joinResponse.data;
+      logger.info(`Starting egg cracking: ${turn} turns`);
+      const turnResponse = await axios.get(
+        "https://api.birds.dog/minigame/egg/turn",
+        { headers }
+      );
+      turn = turnResponse.data.turn;
+      logger.info(`Current turn: ${turn}`);
+      let totalReward = 0;
+      while (turn > 0) {
+        const playResponse = await axios.get(
+          "https://api.birds.dog/minigame/egg/play",
+          { headers }
+        );
+        const { result } = playResponse.data;
+        turn = playResponse.data.turn;
+        totalReward += result;
+        logger.info(`${turn} Egg left | Reward ${result}`);
+      }
+      const claimResponse = await axios.get(
+        "https://api.birds.dog/minigame/egg/claim",
+        { headers }
+      );
+      if (claimResponse.data === true) {
+        logger.info("Claim successful!");
+        logger.info(`Total reward: ${totalReward}`);
+      } else {
+        logger.error("Claim failed");
+      }
+    } catch (error) {
+      logger.error(`Egg minigame error: ${error.message}`);
+    }
+  }
+
   async upgrade(telegramauth, balance) {
     const headers = {
       ...this.headers,
@@ -332,6 +376,7 @@ class BirdX {
         if (apiResult) {
           const balance = apiResult.balance;
           await this.callWormMintAPI(telegramauth);
+          await this.playEggMinigame(telegramauth);
           if (shouldUpgrade) {
             logger.info(`Starting egg check and upgrade...`);
             await this.upgrade(telegramauth, balance);
