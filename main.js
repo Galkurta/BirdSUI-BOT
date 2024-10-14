@@ -49,7 +49,7 @@ class BirdX {
   }
 
   async callAPI(telegramauth) {
-    const url = "https://birdx-api2.birds.dog/user";
+    const url = "https://api.birds.dog/user";
     const headers = {
       ...this.headers,
       Telegramauth: `tma ${telegramauth}`,
@@ -139,55 +139,6 @@ class BirdX {
     }
   }
 
-  async playEggMinigame(telegramauth) {
-    const headers = {
-      ...this.headers,
-      Telegramauth: `tma ${telegramauth}`,
-    };
-
-    try {
-      const joinResponse = await axios.get(
-        "https://birdx-api2.birds.dog/minigame/egg/join",
-        { headers }
-      );
-      let { turn } = joinResponse.data;
-      logger.info(`Starting egg cracking: ${turn} turns`);
-
-      const turnResponse = await axios.get(
-        "https://birdx-api2.birds.dog/minigame/egg/turn",
-        { headers }
-      );
-      turn = turnResponse.data.turn;
-      logger.info(`Current turn: ${turn}`);
-
-      let totalReward = 0;
-
-      while (turn > 0) {
-        const playResponse = await axios.get(
-          "https://birdx-api2.birds.dog/minigame/egg/play",
-          { headers }
-        );
-        const { result } = playResponse.data;
-        turn = playResponse.data.turn;
-        totalReward += result;
-        logger.info(`${turn} Egg left | Reward ${result}`);
-      }
-
-      const claimResponse = await axios.get(
-        "https://birdx-api2.birds.dog/minigame/egg/claim",
-        { headers }
-      );
-      if (claimResponse.data === true) {
-        logger.info("Claim successful!");
-        logger.info(`Total reward: ${totalReward}`);
-      } else {
-        logger.error("Claim failed");
-      }
-    } catch (error) {
-      logger.error(`Egg minigame error: ${error.message}`);
-    }
-  }
-
   async upgrade(telegramauth, balance) {
     const headers = {
       ...this.headers,
@@ -196,7 +147,7 @@ class BirdX {
 
     try {
       const infoResponse = await axios.get(
-        "https://birdx-api2.birds.dog/minigame/incubate/info",
+        "https://api.birds.dog/minigame/incubate/info",
         { headers }
       );
       let incubationInfo = infoResponse.data;
@@ -209,14 +160,14 @@ class BirdX {
       if (incubationInfo.status === "processing") {
         if (currentTime > upgradeCompletionTime) {
           const confirmResponse = await axios.post(
-            "https://birdx-api2.birds.dog/minigame/incubate/confirm-upgraded",
+            "https://api.birds.dog/minigame/incubate/confirm-upgraded",
             {},
             { headers }
           );
           if (confirmResponse.data === true) {
             logger.info("Upgrade completed");
             const updatedInfoResponse = await axios.get(
-              "https://birdx-api2.birds.dog/minigame/incubate/info",
+              "https://api.birds.dog/minigame/incubate/info",
               { headers }
             );
             incubationInfo = updatedInfoResponse.data;
@@ -262,7 +213,7 @@ class BirdX {
   async upgradeEgg(headers) {
     try {
       const upgradeResponse = await axios.get(
-        "https://birdx-api2.birds.dog/minigame/incubate/upgrade",
+        "https://api.birds.dog/minigame/incubate/upgrade",
         { headers }
       );
       const upgradeInfo = upgradeResponse.data;
@@ -286,14 +237,13 @@ class BirdX {
     };
 
     try {
-      const projectResponse = await axios.get(
-        "https://birdx-api2.birds.dog/project",
-        { headers }
-      );
+      const projectResponse = await axios.get("https://api.birds.dog/project", {
+        headers,
+      });
       const allTasks = projectResponse.data.flatMap((project) => project.tasks);
 
       const userTasksResponse = await axios.get(
-        "https://birdx-api2.birds.dog/user-join-task",
+        "https://api.birds.dog/user-join-task",
         { headers }
       );
       const completedTaskIds = userTasksResponse.data.map(
@@ -314,7 +264,7 @@ class BirdX {
           };
 
           const joinTaskResponse = await axios.post(
-            "https://birdx-api2.birds.dog/project/join-task",
+            "https://api.birds.dog/project/join-task",
             payload,
             { headers }
           );
@@ -382,7 +332,6 @@ class BirdX {
         if (apiResult) {
           const balance = apiResult.balance;
           await this.callWormMintAPI(telegramauth);
-          await this.playEggMinigame(telegramauth);
           if (shouldUpgrade) {
             logger.info(`Starting egg check and upgrade...`);
             await this.upgrade(telegramauth, balance);
