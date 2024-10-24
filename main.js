@@ -99,6 +99,61 @@ class BirdX {
     return null;
   }
 
+  async checkGuildMembership(telegramauth) {
+    const headers = {
+      ...this.headers,
+      Telegramauth: telegramauth,
+    };
+    const guildMeUrl = "https://api.birds.dog/guild/me";
+
+    try {
+      const response = await axios.get(guildMeUrl, { headers });
+      // If we get a response with guildMember data, user is already in a guild
+      if (response.data && response.data.guildMember) {
+        logger.info(`Already a member of guild: ${response.data.guild.name}`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error(`Error checking guild membership: ${error.message}`);
+      return false;
+    }
+  }
+
+  async joinGuild(telegramauth) {
+    // First check if already in a guild
+    const isGuildMember = await this.checkGuildMembership(telegramauth);
+    if (isGuildMember) {
+      return true;
+    }
+
+    const headers = {
+      ...this.headers,
+      Telegramauth: telegramauth,
+    };
+    const guildUrl =
+      "https://api.birds.dog/guild/join/6719f06c4a340fbb632a5075";
+
+    try {
+      const response = await axios.get(guildUrl, { headers });
+      if (response.data === "OK") {
+        logger.info("Successfully joined the guild");
+        return true;
+      } else {
+        logger.warn("Unexpected response when joining guild");
+        return false;
+      }
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        logger.error("Error joining guild: Guild not found or invalid ID");
+        return false;
+      } else {
+        logger.error(`Error joining guild: ${error.message}`);
+        return false;
+      }
+    }
+  }
+
   async callWormMintAPI(telegramauth) {
     const statusUrl = "https://worm.birds.dog/worms/mint-status";
     const mintUrl = "https://worm.birds.dog/worms/mint";
@@ -385,6 +440,9 @@ class BirdX {
             logger.info(`Starting task execution...`);
             await this.performTasks(telegramauth);
           }
+          // Automatically attempt to join guild for every account
+          logger.info(`Attempting to join guild...`);
+          await this.joinGuild(telegramauth);
         } else {
           logger.error(
             `API call failed for account ${userId} | Skipping this account.`
